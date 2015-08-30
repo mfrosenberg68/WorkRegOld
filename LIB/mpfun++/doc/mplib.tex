@@ -1,0 +1,439 @@
+\documentstyle[11pt,fullpage]{article}
+
+\def\Fninety{Fortran~90}
+\def\CC{C\raise.22ex\hbox{{\footnotesize +}}\raise.22ex\hbox{\footnotesize +}}
+\def\mp{\verb|mp|}
+
+\title{A \CC-based Multiprecision System}
+
+\author{Siddhartha Chatterjee
+        \thanks{Research Institute for Advanced Computer Science, 
+	        Mail Stop T27A-1, 
+		NASA Ames Research Center, 
+		Moffett Field, CA 94035-1000 (sc@riacs.edu).
+		This work was supported by the NAS Systems Division
+		via Contract NAS 2-13721 between NASA and the
+		Universities Space Research Association (USRA).}
+	}
+
+\date{September 1994}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+To be written.
+\end{abstract}
+
+\section{Introduction}
+
+This document describes a \CC\ interface to David Bailey's
+Fortran-based multiprecision
+package~\cite{bailey:90,bailey:93,bailey:94}.
+Two events prompted the writing of the \CC\ interface.
+First,
+David rewrote his original Fortran-77 based system to take advantages
+of the derived data types and module facilities of \Fninety.
+Second,
+he apprised me that there were a large number of potential users of
+his system,
+were it to be made available in C/\CC.
+It was natural to use classes and operator overloading in \CC\ to
+achieve the same effect as David achieved with \Fninety\ modules.
+
+The \Fninety\ multiprecision library consists of two
+files---mpmod90.f, which defines the module interfaces (6557 lines);
+and mpfun90.f, which provides the actual computation routines (8732
+lines).
+From the beginning,
+I decided not to rewrite the computation routines,
+but to use external linkage to call them from the \CC\ code.
+This restricted the \CC\ classes to have the same memory layout as the
+\Fninety\ derived types,
+but I deemed this preferable to rewriting several thousand lines of
+intricate and sophisticated numerical computations.
+Further,
+the \Fninety\ module interfaces result in a explosion of routines
+defining mixed-mode operations between the three derived
+multiprecision types and the basic \Fninety\ data types.
+I wanted to avoid such an explosion,
+and therefore decided to use automatic conversion and ambiguity
+resolution in \CC\ to achieve the same effect.
+This is also more in line with \CC\ philosophy
+(see Stroustrup's discussion of this
+issue~\cite[p.~80]{stroustrup:94}).
+
+The remainder of this document serves two purposes:
+it is the user guide for the library,
+and it documents and explains design decisions.
+
+The library has been tested on the following platforms: 
+Sun-4 with CC version SC2.0.1,
+SGI with CC version 2.2,
+IBM-RS6000/590 with xlC,
+and IBM-RS6000/590 with g++ version 2.6.0.
+{\bf The library does not compile with g++ versions prior to 2.6.0.}
+
+\section{Classes and operations}
+
+The library exports three classes: 
+\verb|mp_integer|, \verb|mp_real|, and \verb|mp_complex|.
+Call the procedure \verb|mp_init()| before performing any
+multiprecision operations in the program.
+This procedure sets parameters in the mpfun library and precomputes
+$\pi$, $\log 2$, and $\log 10$,
+which are needed in a number of transcendental function routines.
+
+As \CC\ does not have a built-in complex data type,
+the file \verb|complex.H| defines two skeletal classes \verb|FComplex|
+(single-precision complex) and \verb|DComplex| (double-precision
+complex).
+These are also the names of the corresponding classes in the Rogue
+Wave classes,
+and some day I will get around to fixing the code to use those classes
+if they are available.
+
+\subsection{Constructors and destructors}
+
+Each of the three \mp\ classes has constructors from the types
+\verb|void|, \verb|int|, \verb|float|, \verb|double|, and
+\verb|char*|.
+String constants for representing \mp\ variables follow the
+formatting conventions of Fortran.
+Thus,
+one can say
+\begin{verbatim}
+    mp_integer ia = -1.0;
+    mp_real p = 5;
+    mp_complex u[100];
+    mp_real x = "1.234567890 1234567890 1234567890 D-100";
+\end{verbatim}
+In addition,
+an \verb|mp_real| can be constructed from an \verb|mp_integer|,
+and an \verb|mp_complex| can be constructed from an \verb|mp_integer|
+or an \verb|mp_real|.
+
+The \mp\ classes have no explicit copy constructors,
+since the default action of bitwise copying is the correct one.
+One can say
+\begin{verbatim}
+    mp_real ee = exp(mp_real(1.0));
+\end{verbatim}
+They also lack explicit destructors for similar reasons.
+
+\subsection{Assignment}
+
+Each of the \mp\ classes has assignment operators whose argument
+can come from any of the \mp\ classes or from the base types
+\verb|int|, \verb|float|, \verb|double|, or \verb|char*|.
+The current implementation does not provide \verb|operator int()|,
+\verb|operator float()|,
+\verb|operator double()|,
+and \verb|operator char *()|
+that would allow the transparent assignment of \mp\ variables to
+the base types,
+as this causes ambiguity problems in mixed-mode operations.
+This problem will be fixed in a later version of the library.
+As an intermediate fix,
+use the friend functions \verb|INT|, \verb|REAL|, and \verb|DBLE|.
+Thus,
+\begin{verbatim}
+    mp_integer id, k;
+    int p, nd4;
+
+    id = power(mp_real(10), nd4)/2;
+    p = INT(k);
+\end{verbatim}
+
+\subsection{Operator overloading}
+
+The following operators are overloaded for the \mp\ classes:
+\verb|+|,
+\verb|-| (both unary and binary),
+\verb|*|,
+\verb|/|,
+%\verb|%|,
+\verb|+=|,
+\verb|-=|,
+\verb|*=|,
+\verb|/=|,
+\verb|==|,
+\verb|!=|,
+\verb|<=|,
+\verb|>=|,
+\verb|<|,
+\verb|>|,
+\verb|>>|,
+and \verb|<<|.
+The binary arithmetic operations have prototypes of the form
+\begin{verbatim}
+    friend const T operator+(const T&, const T&);
+\end{verbatim}
+where \verb|T| is one of \verb|mp_integer|, \verb|mp_real|, or
+\verb|mp_complex|.
+The argument matching facility of \CC\ handles mixed-mode operations.
+Thus,
+the following statements are all legal.
+\begin{verbatim}
+    int i, j;
+    double a, b;
+    mp_integer mi, mj;
+    mp_real ma, mb;
+    mp_complex mc;
+
+    mc += i;
+    ma = (mb*mi)/b;
+    j = (a*mb == ma-mi) ? INT(mi) : INT(ma);
+    cout << mi << ma << mc;
+\end{verbatim}
+
+The overloading of the stream I/O operations addresses one of David's
+complaints about the \Fninety\ version of his library,
+in that special input and output routines need not be called to read
+and write \mp\ variables.
+
+\subsection{Other functions}
+
+Each of the \mp\ classes has some other functions defined for it,
+such as power, 
+logarithms, 
+trigonometric functions, 
+and transcendental functions.
+Refer to the file \verb|mpmod.H| for a complete listing.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|} \hline
+Name & Description & Type & Dynamic? & Default \\ \hline
+\verb|mpipl| & Maximum and initial precision, in digits & int & no &
+100 \\
+\verb|mpiou| & Initial output precision, in digits & int & no & 56 \\
+\verb|mpiep| & $\log_{10}$ of initial MP epsilon & int & no &
+10$-$\verb|mpipl| \\ 
+\hline
+\verb|mpwds| & Maximum and initial precision, in words & int & no &
+$\frac{\verb|mpipl|}{7.227472}+1$ \\
+\verb|mpoud| & Current output precision, in digits & int & yes &
+\verb|mpiou| \\
+\verb|mpeps| & Current MP epsilon value & \verb|mp_real| & yes &
+$10^{\verb|mpiep|}$ \\
+\verb|mpl02| & $\log 2$ & \verb|mp_real| & no & $\log 2$ \\
+\verb|mpl10| & $\log 10$ & \verb|mp_real| & no & $\log 10$ \\
+\verb|mppic| & $\pi$ & \verb|mp_real| & no & $\pi$ \\ 
+\hline
+\verb|idb| & MPFUN debug level & \verb|int| & yes & 0 \\
+\verb|mcr| & Crossover point for advanced routines & \verb|int| & yes
+& 7 \\ 
+\hline
+\end{tabular}
+\end{center}
+\caption{Tunable parameters for the MP package.}
+\label{tab:parameters}
+\end{table}
+
+\section{Tunable parameters}
+
+The \mp\ library and the file \verb|mpfun.f| define a number of
+global variables,
+as shown in \ref{tab:parameters}.
+The column marked ``Dynamic?'' indicates whether a parameter can be
+changed dynamically during program execution.
+The first group of three parameters can be changed using the
+\verb|-D<name>=<value>| option to make or the \CC\ compiler,
+where \verb|<name>| is one of \verb|MPIPL|, \verb|MPIOU|, or
+\verb|MPIEP|.
+The second group of variables defines some often-needed mathematical
+constants,
+and also some parameters related to machine precision.
+The final group of parameters are defined in \verb|mpfun.f| and must
+be read and set in a rather arcane way if you are linking to the
+Fortran~77 version.
+The procedure
+\begin{verbatim}
+    void MPINQP(const char* s, int& v, const int& n);
+\end{verbatim}
+reads the variable named in \verb|s| into \verb|v|,
+while the procedure
+\begin{verbatim}
+    void MPSETP(const char* s, const int& v, const int& n);
+\end{verbatim}
+sets the value of the variable named in \verb|s| to \verb|v|.
+If you are using the \Fninety\ version of the library
+(\verb|mpfun90.f| rather than \verb|mpfun.f|),
+these parameters are called \verb|mpidb| and \verb|mpmcr| and can be
+read and written as usual.
+
+The files \verb|mpfun.f| and \verb|mpfun90.f| define some more
+settable parameters,
+that you should only play with if you are tinkering with the numerical
+algorithms.
+Refer to~\cite{bailey:94} for a complete list of these parameters.
+
+\section{Design decisions}
+
+I had several major design goals for the \CC\ interface to the \mp\
+library:
+\begin{enumerate}
+\item
+Make the transition from the standard arithmetic types to the \mp\
+types as smooth as possible for the user.
+This meant a full complement of constructors,
+initializers,
+the assignment operation,
+and other arithmetic and logical operations.
+I wanted to make mixed-mode operations as transparent as possible,
+with the user being required to perform explicit conversions chiefly
+for the sake of controlling precision.
+
+\item
+Make the interface work under a variety of \CC\ compilers,
+including true compilers such as \verb|gcc| and cfront-based
+translators such as \verb|CC|.
+\end{enumerate}
+
+From an implementation standpoint,
+I wanted to avoid the explosion of routines as had happened in David's
+\Fninety\ version of the library.
+(In his implementation,
+the numerical routines comprise 8732 lines of code,
+while the interface routines comprise 6557 lines of code.)
+He explicitly coded a routine for every possible combination of
+argument types.
+In his case,
+he had no other choice,
+since the mechanisms for supporting generic functions in \Fninety\ are
+quite basic and limited.
+\CC,
+on the other hand,
+has a sophisticated system of argument matching and ambiguity
+control~\cite{ellis:stroustrup:90} to match up definitions and calls
+of overloaded operators.
+I wanted to exploit this facility to the fullest and keep the size of
+the library small.
+While the explicit approach can gain some advantage by combining the
+argument conversions with the arithmetic,
+this gain is minimal in this case as the arithmetic routines usually
+dominate the computation cost.
+
+\subsection{Mixed mode operations}
+However,
+interactions among these goals make them unattainable without some
+compromise.
+Consider the interaction between assignment and addition.
+Since the basic arithmetic types are not \CC\ classes and are treated
+specially,
+the only transparent way to assign an \verb|mp_real r| to an \verb|int
+i| is to define \verb|operator int()| as a member function for class
+\verb|mp_real|.
+Then the assignment \verb|i = r;| is just shorthand for \verb|i =
+r.operator int();|.
+Now suppose that we have defined
+\begin{verbatim}
+    mp_real(const int);
+\end{verbatim}
+and
+\begin{verbatim}
+    friend const mp_real operator+(const mp_real&, const mp_real&);
+\end{verbatim}
+for class \verb|mp_real|.
+Then the statement \verb|i = r+i;| is ambiguous;
+for,
+according to the argument matching rules of the language,
+either of the interpretations \verb|i = operator+(r, mp_real(i));|
+and \verb|i = r.operator() + i;| is equally good.
+Note that while I have illustrated this problem with an \verb|int| and
+an \verb|mp_real|,
+this same problem surfaces in mixed-mode operations between \mp\
+classes if every \mp\ class has a constructor from every other \mp\ 
+class.
+
+One obvious solution is to go back to the explicit approach,
+but I was lazy and loath to do that just yet.
+Instead,
+I wanted to pursue other approaches to limit code growth.
+My solution was to provide a sparse set of contructors and the full
+cross-product of assignment operators,
+and not to provide the conversion operators to the basic types.
+This limits the code explosion and solves the problem of unambiguous
+mixed-mode operations for the \mp\ types,
+but does not allow transparent assignment of \mp\ variables to
+integers and other basic types.
+Since the overloaded assignment operator must be a nonstatic member
+function of a class,
+there is no way of redefining assignment for the basic types.
+\Fninety\ does not have this particular problem;
+it allows redefinition of assignment for arbitrary types of the
+assignment target and the assigned value.
+
+There was one further problem;
+even with these changes to remove ambiguity,
+\verb|gcc| version~2.5.8 would not correctly compile the \mp\ library.
+This appears to have been a compiler bug that has been fixed in
+\verb|gcc| version~2.6.0.
+The current version of the library is the one described in the
+previous paragraph.
+
+Much as I hate to admit it,
+I feel that,
+with the current compilers available to users,
+the only robust way to implement this library is to bypass the
+argument matching mechanism of \CC\ and revert to the explicit
+approach that David employed.
+This is a disappointing realization but perhaps a realistic compromise
+between elegance and reliability.
+
+\subsection{External linkage with Fortran code}
+
+As the \CC\ wrappers call Fortran subroutines to perform the numeric
+computations,
+we need an external linkage mechanism to correctly link the \CC\ and
+Fortran programs.
+Fortran passes parameters by reference,
+while \CC\ by default passes parameters by value/result.
+However,
+\CC\ allows the user to specify the passing of parameters by
+reference,
+by using the reference type.
+Finally,
+the use of the keyword \verb|const| allows the semantics of the
+\verb|INTENT| attribute in \Fninety.
+
+\CC\ has special syntax to specify external linkage.
+However,
+C is the only language with which all \CC\ compilers support external
+linkage.
+Of the compilers I used,
+only IBM's \verb|xlC| supports the \verb|extern "FORTRAN"| linkage.
+For all other compilers,
+I had to mangle the names of the Fortran routines and use the
+\verb|extern "C"| linkage.
+Thus,
+on the IBM RS6000/590,
+the Fortran subroutine with the declaration
+\begin{verbatim}
+       SUBROUTINE MPCPWR(L, A, N, B)
+      DIMENSION A(2*L), B(2*L)
+\end{verbatim}
+would be declared
+\begin{verbatim}
+    extern "FORTRAN" mpcpwr(const int&, const float*, const int&, float*);
+\end{verbatim}
+using the \verb|xlC| compiler,
+while it would be declared
+\begin{verbatim}
+    extern "C" mpcpwr_(const int&, const float*, const int&, float*);
+\end{verbatim}
+using \verb|g++|.
+
+One final nonportability concerns the Fortran libraries that need to
+be linked in.
+Depending on the hardware platform and compiler,
+the libraries required might be libxlf90.a and libxlf.a;
+or libI77.a, libF77.a, and libisam.a;
+or even libM77.a and libF77.a.
+
+\bibliographystyle{plain}
+\bibliography{mplib}
+
+\end{document}

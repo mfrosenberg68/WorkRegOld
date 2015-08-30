@@ -1,0 +1,91 @@
+CC = g++
+##CFLAGS =  -Wall -g -Ddoubleonly -DGNU -O2 -Dmpipl=300
+CFLAGS =  -Wall -g -Ddoubleonly -DGNU_TEMPLATE_DEF -DGNU -O3
+CFLAGS2 = -I$(HOME)/include -I$(HOME)/lib/include -I$(HOME)/lib/template -L$(HOME)/lib
+
+CCAIX = xlC
+CFLAGSAIX = -DxlC -Dibmrs6000 -Ddoubleonly -DGNU_TEMPLATE_DEF -O3
+
+FFLAGS = -O2
+
+OBJ = qc_utilities.o
+OBJ2 = qc_utilities.o functionc.o
+OBJDATA = functions_reg.o
+OBJREG = functions_reg.o convolution.o
+OBJMPREG = regkernel_mp.o data_mp.o mptrapez.o qc_utilities.o
+OBJMPREGaix = regkernel_mp.C data_mp.C mptrapez.C qc_utilities.C
+
+#LIBS = -lf2c -lg++ -lm
+LIBS = -lg2c 
+LIBSB = -lmp -lg2c -ldo 
+LIBSAIX = -lmp -ldo -lxlf -lm 
+
+PROGS = mp_conv_sp mp_random_test mp_rege2 mp_Purerege2 mp_datae2 mp_Xib mp_Gauss mp_Gauss.all mp_GaussScan mp_GaussScan.aix Kernelout mp_Purerege2.aix
+
+BACKUPDIR = $(HOME)/Shared/BACKUPS
+
+
+.C.o:
+	$(CC) $(CFLAGS) $(CFLAGS2) -c $*.C
+
+all:mp_conv_sp mp_random_test mp_rege2 mp_Purerege2 mp_datae2 mp_Xib mp_Gauss mp_Gauss.aix mp_GaussScan mp_GaussScan.aix Kernelout mp_Purerege2.aix
+
+mp_conv_sp:mp_conv_sp.o
+	$(CC) -o mp_conv_sp $(CFLAGS) $(CFLAGS2) mp_conv_sp.o -lmp $(LIBS)
+
+mp_random_test:mp_random_test.o
+	$(CC) -o mp_random_test $(CFLAGS) $(CFLAGS2) mp_random_test.o -lmp $(LIBS)
+
+mp_rege2:mp_rege2.o $(OBJMPREG)
+	$(CC) -o mp_rege2 $(CFLAGS) $(CFLAGS2) mp_rege2.o -lmp $(OBJMPREG) $(LIBSB) 
+
+mp_rege2.aix:mp_rege2.C $(OBJMPREGaix)
+	$(CCAIX) -o mp_rege2.aix $(CFLAGSAIX) $(CFLAGS2) mp_rege2.C -lmp $(OBJMPREGaix) $(LIBSAIX) 
+
+mp_Purerege2:mp_Purerege2.o $(OBJMPREG)
+	$(CC) -o mp_Purerege2 $(CFLAGS) $(CFLAGS2) mp_Purerege2.o -lmp $(OBJMPREG) $(LIBSB) 
+
+mp_Purerege2.aix:mp_Purerege2.C $(OBJMPREGaix)
+	$(CCAIX) -o mp_Purerege2.aix $(CFLAGSAIX) $(CFLAGS2) mp_Purerege2.C $(OBJMPREGaix) $(LIBSAIX) 
+
+mp_datae2:mp_datae2.o data_mp.o
+	$(CC) -o mp_datae2 $(CFLAGS) $(CFLAGS2) mp_datae2.o data_mp.o -lmp  $(LIBS) 
+
+mp_Xib:mp_Xib.o
+	$(CC) -o mp_Xib $(CFLAGS) $(CFLAGS2) mp_Xib.o -lmp $(LIBS)
+
+mp_Gauss:mp_Gauss.o $(OBJ)
+	$(CC) -o mp_Gauss $(CFLAGS) $(CFLAGS2) mp_Gauss.o $(OBJ) -lmp -ldo $(LIBS)
+
+mp_GaussScan:mp_GaussScan.o $(OBJ)
+	$(CC) -o mp_GaussScan $(CFLAGS) $(CFLAGS2) mp_GaussScan.o $(OBJ) -lmp -ldo $(LIBS)
+
+mp_Gauss.aix:mp_Gauss.C qc_utilities.C
+	$(CCAIX) -o mp_Gauss.aix $(CFLAGSAIX) $(CFLAGS2) mp_Gauss.C qc_utilities.C $(LIBSAIX)
+
+mp_GaussScan.aix:mp_GaussScan.C qc_utilities.C
+	$(CCAIX) -o mp_GaussScan.aix $(CFLAGSAIX) $(CFLAGS2) mp_GaussScan.C qc_utilities.C $(LIBSAIX)
+
+
+mp_preGauss:mp_preGauss.o
+	$(CC) -o mp_preGauss $(CFLAGS) $(CFLAGS2) mp_preGauss.o -lmp $(LIBS)
+
+Kernelout:Kernelout.o $(OBJ2)
+	$(CC) -o Kernelout $(CFLAGS) $(CFLAGS2) Kernelout.o $(OBJ2) $(LIBSB)
+
+
+clean:
+	rm -vf *.o *~
+
+backup:
+	tar cvf PureMPReg.tar *.[hc] *.[HC] *.C,v Makefile*
+	gzip -9fv PureMPReg.tar
+	cp -v PureMPReg.tar.gz $(BACKUPDIR)
+
+rm_progs:
+	rm -vf $(PROGS)
+
+backupall: 
+	tar cvf WorkRegPart1.tar *.[hc] *.[HC] *.C,v Makefile* Beta Delta FGOP GEN-ERROR Gauss KERNE ;\
+	gzip -vf9 WorkRegPart1.tar;\
+	cp -v WorkRegPart1.tar.gz $(BACKUPDIR)

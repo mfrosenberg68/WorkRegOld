@@ -1,0 +1,3 @@
+#!/bin/sh
+tar cvf fftreg.tar *.[hc] *.[HC] Makefile
+gzip -9fv fftreg.tar

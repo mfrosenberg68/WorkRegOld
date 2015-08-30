@@ -1,0 +1,79 @@
+README file for mpfun++ library
+
+Updated 1 March 1995
+
+This contains sources, documentation, and test programs for the
+mpfun++ library callable from C++, which is built on top of David
+Bailey's Fortran MPFUN library.
+
+The following files and subdirectories are included in this tar
+archive.
+
+Filename		Description
+
+Makefile.CC-NAS	  -|
+Makefile.CC-UNC    |
+Makefile.g++       |	Various makefiles.
+Makefile.gcc       |
+Makefile.xlC-NAS   |
+Makefile.xlC-UNC  -|
+README			This file.
+arch.h			Architecture-specific includes.
+complex.H		Skeletal complex class.
+doc/			Subdirectory containing documentation.
+mpfun.f			MPFUN routines (F77).
+mpmod.C			Interface to MPFUN routines (C++).
+mpmod.H			Header file for MPFUN interface.
+test/			Subdirectory containing test programs.
+
+1. In order to compile the library libmp.a, you will need to select a
+makefile.  A sample of makefiles that have worked at various locations
+is included.  I suggest you choose a makefile that closely matches
+your needs and edit as required.
+
+You may need to edit the following fields in the makefile
+to make the compilation complete successfully: CC, CFLAGS, and LIBS.
+The CC variable should be set to your C++ compiler; note that the
+library WILL NOT COMPILE under g++ versions prior to 2.6.0.  The
+CFLAGS should include any desired optimization flags as well as
+several -D<symbolname> flags if appropriate:
+
+<symbolname>		When needed
+
+doubleonly		If math library only exists in double
+			precision version; if your system has the
+			routines cosf or sinf, you don't need this.
+ibmrs6000		On IBM RS/6000 workstations.
+xlC			On IBM RS/6000 workstations, if you are using
+			the xlC compiler.
+
+The LIBS variable needs the appropriate libraries required for
+linking.  These vary from system to system, and you may have to play
+around with this some to resolve linking errors.
+
+2. After editing the makefile, type "make".  This may produce warning
+messages, but should terminate successfully after creating libmp.a.
+
+3.  Run the test programs by typing "make test".  This will make and
+run the various test programs and compare the results against the
+reference values provided.  This may again produce warning messages
+but should terminate normally.
+
+4. Install libmp.a and the include files (mpmod.H, complex.H, and
+arch.h) in the desired locations.
+
+5. Print the documentation in subdirectory doc.  A PostScript file is
+provided along with the LaTeX sources for your convenience.
+
+These codes have been tested quite thoroughly, but a few bugs may
+remain.  If you encounter any, please let us know and we will fix them
+as soon as possible.
+
+Siddhartha Chatterjee			David H. Bailey
+Department of Computer Science		NASA Ames Research Center
+The University of North Carolina	Mail Stop T27A-1
+Chapel Hill, NC 27599-3175		Moffett Field, CA 94035-1000
+Tel: 919-962-1766			Tel: 415-604-4410
+Fax: 919-962-1799			Fax: 415-604-3957
+Email: sc@cs.unc.edu			Email: dbailey@nas.nasa.gov
+

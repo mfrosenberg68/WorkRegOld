@@ -1,0 +1,52 @@
+CC = xlC
+CFLAGS = -DxlC -Dibmrs6000 -Ddoubleonly -O3
+CFLAGS2 = -I$(HOME)/include -I$(HOME)/lib/include -I$(HOME)/lib/template -L$(HOME)/lib
+#CFLAGS2 = -I$(HOME)/include  -L$(HOME)/lib
+
+FFLAGS = -O3
+
+LIBS = -lxlf -lm
+
+OBJ = qc_utilities.o
+OBJDATA = functions_reg.o
+OBJREG = functions_reg.o convolution.o
+OBJMPREG = regkernel_mp.o data_mp.o  mptrapez.o
+
+PROGS = mp_conv_sp.aix mp_random_test.aix mp_rege2.aix mp_datae2.aix mp_Xib.aix mp_Gauss.aix
+
+
+.C.o:
+	$(CC) $(CFLAGS) $(CFLAGS2) -c $*.C
+
+all:mp_conv_sp.aix mp_random_test.aix mp_rege2.aix mp_datae2.aix mp_Gauss.aix
+
+mp_conv_sp.aix:mp_conv_sp.o
+	$(CC) -o mp_conv_sp.aix $(CFLAGS) $(CFLAGS2) mp_conv_sp.o -lmp $(LIBS)
+
+mp_random_test.aix:mp_random_test.o
+	$(CC) -o mp_random_test.aix $(CFLAGS) $(CFLAGS2) mp_random_test.o -lmp $(LIBS)
+
+mp_random_Error.aix:mp_random_Error.o
+	$(CC) -o mp_random_Error.aix $(CFLAGS) $(CFLAGS2) mp_random_Error.o -lmp $(LIBS)
+
+mp_Xib.aix:mp_Xib.o
+	$(CC) -o mp_Xib.aix $(CFLAGS) $(CFLAGS2) mp_Xib.o -lmp $(LIBS)
+
+mp_rege2.aix:mp_rege2.o $(OBJMPREG)
+	$(CC) -o mp_rege2.aix $(CFLAGS) $(CFLAGS2) mp_rege2.o -lmp $(OBJMPREG) $(LIBS) 
+
+mp_datae2.aix:mp_datae2.o data_mp.o
+	$(CC) -o mp_datae2.aix $(CFLAGS) $(CFLAGS2) mp_datae2.o data_mp.o -lmp  $(LIBS) 
+
+mp_Gauss.aix:mp_Gauss.o $(OBJ)
+	$(CC) -o mp_Gauss.aix $(CFLAGS) $(CFLAGS2) mp_Gauss.o $(OBJ) -lmp -ldo $(LIBS)
+
+mp_preGauss.aix:mp_preGauss.o
+	$(CC) -o mp_preGauss.aix $(CFLAGS) $(CFLAGS2) mp_preGauss.o -lmp $(LIBS)
+
+clean:
+	rm -f *.o *~
+
+rm_progs:
+	rm -f $(PROGS)
+

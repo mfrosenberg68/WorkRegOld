@@ -1,0 +1,31 @@
+\begin{thebibliography}{1}
+
+\bibitem{bailey:90}
+David~H. Bailey.
+\newblock A portable high performance multiprecision package.
+\newblock RNR Technical Report RNR-90-022, Numerical Aerodynamic Simulation
+  Systems Division, NASA Ames Research Center, Moffett Field, CA, 1990.
+
+\bibitem{bailey:93}
+David~H. Bailey.
+\newblock Multiprecision translation and execution of {F}ortran programs.
+\newblock {\em ACM Transactions on Mathematical Software}, 19(3):288--319,
+  September 1993.
+
+\bibitem{bailey:94}
+David~H. Bailey.
+\newblock A {F}ortran-90 based multiprecision system.
+\newblock RNR Technical Report RNR-94-013, Numerical Aerodynamic Simulation
+  Systems Division, NASA Ames Research Center, Moffett Field, CA, June 1994.
+
+\bibitem{ellis:stroustrup:90}
+Margaret~A. Ellis and Bjarne Stroustrup.
+\newblock {\em The Annotated {C}++ Reference Manual}.
+\newblock Addison-Wesley Publishing Company, Reading, MA, 1990.
+
+\bibitem{stroustrup:94}
+Bjarne Stroustrup.
+\newblock {\em The Design and Evolution of {C++}}.
+\newblock Addison-Wesley Publishing Company, Reading, MA, 1994.
+
+\end{thebibliography}

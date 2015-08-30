@@ -1,0 +1,44 @@
+CC = g++ 
+##CFLAGS =  -Wall -g -Ddoubleonly -DGNU -O2 -Dmpipl=300
+CFLAGS =  -Wall -g -Ddoubleonly -DGNU -O2
+##CFLAGS2 = -I/scratch/rosenberg/WorkReg -L/scratch/rosenberg/WorkReg
+CFLAGS2 = -I$(HOME)/include -L$(HOME)/lib
+
+FFLAGS = -O2
+
+OBJSPL = nrutil.o
+
+#LIBS = -lf2c -lg++ -lm
+LIBS = -L$(HOME)/lib -lmp -lg2c 
+
+.C.o:
+	$(CC) $(CFLAGS) $(CFLAGS2) -c $*.C
+
+
+all:mp_LIPGauss mp_LIPRealGauss GaussLIP mp_Error mp_b2Error mp_random_Error
+
+Linpol:Linpol.o $(OBJSPL)
+	$(CC) -o Linpol $(CFLAGS) $(CFLAGS2) Linpol.o $(OBJSPL)
+
+mp_LIPGauss:mp_LIPGauss.o $(OBJSPL)
+	$(CC) -o mp_LIPGauss $(CFLAGS) $(CFLAGS2) mp_LIPGauss.o $(OBJSPL) $(LIBS)
+
+mp_LIPRealGauss:mp_LIPRealGauss.o $(OBJSPL)
+	$(CC) -o mp_LIPRealGauss $(CFLAGS) $(CFLAGS2) mp_LIPRealGauss.o $(OBJSPL) $(LIBS)
+
+GaussLIP:GaussLIP.o $(OBJSPL)
+	$(CC) -o GaussLIP $(CFLAGS) $(CFLAGS2) GaussLIP.o $(OBJSPL) $(LIBS)
+
+
+mp_Error:mp_Error.o $(OBJSPL)
+	$(CC) -o mp_Error $(CFLAGS) $(CFLAGS2) mp_Error.o $(OBJSPL) $(LIBS)
+
+mp_b2Error:mp_b2Error.o $(OBJSPL)
+	$(CC) -o mp_b2Error $(CFLAGS) $(CFLAGS2) mp_b2Error.o $(OBJSPL) $(LIBS)
+
+mp_random_Error:mp_random_Error.o
+	$(CC) -o mp_random_Error $(CFLAGS) $(CFLAGS2) mp_random_Error.o $(LIBS)
+
+clean:
+	rm -f *.o *~
+

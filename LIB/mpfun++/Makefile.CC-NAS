@@ -1,0 +1,82 @@
+SRCS = mpmod.C mpfun.f 
+
+OBJS1 = $(SRCS:.C=.o)
+OBJS = $(OBJS1:.f=.o)
+
+CC = CC
+CFLAGS = +w -O2
+CFLAGS2 = -I.. -L..
+
+FFLAGS = -O2
+
+LPATH = /usr/lang/SC2.0.1
+
+LIBS = -lI77 -lF77 -lisam -lm
+
+all: libmp.a
+
+test: tmpmod mp_rsa mp_fftreal mp_fftcmp mp_pslqm mp_iotest clean
+
+libmp.a: $(OBJS)
+	ar ruv libmp.a $(OBJS)
+	-ranlib libmp.a
+
+tmpmod:
+	cd test; \
+	$(CC) -o tmpmod $(CFLAGS) $(CFLAGS2) tmpmod.C -lmp $(LIBS); \
+	tmpmod >tmpmod.out; \
+	diff tmpmod.out tmpmod.ref
+
+mp_rsa:
+	cd test; \
+	$(CC) -o mp_rsa $(CFLAGS) $(CFLAGS2) mp_rsa.C -lmp $(LIBS); \
+	mp_rsa >mp_rsa.out; \
+	diff mp_rsa.out mp_rsa.ref
+
+mp_fftreal:
+	cd test; \
+	$(CC) -o mp_fftreal $(CFLAGS) $(CFLAGS2) mp_fftreal.C -lmp $(LIBS); \
+	mp_fftreal >mp_fftreal.out; \
+	diff mp_fftreal.out mp_fftreal.ref
+
+mp_fftcmp:
+	cd test; \
+	$(CC) -o mp_fftcmp $(CFLAGS) $(CFLAGS2) mp_fftcmp.C -lmp $(LIBS); \
+	mp_fftcmp >mp_fftcmp.out; \
+	diff mp_fftcmp.out mp_fftcmp.ref
+
+mp_pslqm:
+	cd test; \
+	$(CC) -o mp_pslqm $(CFLAGS) $(CFLAGS2) mp_pslqm.C -lmp $(LIBS); \
+	mp_pslqm >mp_pslqm.out; \
+	diff mp_pslqm.out mp_pslqm.ref
+
+mp_iotest:
+	cd test; \
+	$(CC) -o mp_iotest $(CFLAGS) $(CFLAGS2) mp_iotest.C -lmp $(LIBS); \
+	mp_iotest; \
+	diff mp_iotest.in mp_iotest.out
+
+clean:
+	rm -f *.o
+	cd test; \
+	rm -f tmpmod mp_rsa mp_fftreal mp_fftcmp mp_pslqm mp_iotest *.o *.out
+
+mpmod.o: mpmod.H arch.h
+
+tmpmod.o: mpmod.H
+
+mp_rsa.o: mpmod.H
+
+mp_fftreal.o: mpmod.H
+
+mp_fftcmp.o: mpmod.H
+
+mp_pslqm.o: mpmod.H
+
+mp_iotest.o: mpmod.H
+
+.SUFFIXES: .C $(SUFFIXES)
+
+.C.o:
+	$(CC) $(CFLAGS) -c $*.C
